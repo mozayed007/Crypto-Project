@@ -66,28 +66,28 @@ def measure_time(func, *args, **kwargs):
     Returns:
         tuple: A tuple containing the result of the function and the time taken in seconds.
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
     result = func(*args, **kwargs)
-    end_time = time.time()
+    end_time = time.perf_counter()
     return result, end_time - start_time
 
 if __name__ == "__main__":
-    file_sizes = [1, 5, 10, 100]
+    file_sizes = ['1KB', '5KB', '10KB', '100KB']
     password = "my_password"
 
     # Decrypt and measure performance for different file sizes
     for size in file_sizes:
-        with open(f"encrypted_{size}KB.txt", "rb") as f:
+        with open(f"encrypted_{size}_file.txt", "rb") as f:
             encrypted_data = f.read()
 
         decrypted_data, decryption_time = measure_time(decrypt, encrypted_data, password)
         print(f"Decryption time for PGP-CFB ({size}KB): {decryption_time:.4f} seconds")
 
-        with open(f"decrypted_{size}KB.txt", "wb") as f:
+        with open(f"decrypted_{size}_file.txt", "wb") as f:
             f.write(decrypted_data)
 
         # Verify successful decryption by comparing the original and decrypted data
-        with open(f"message_{size}KB.txt", "rb") as f:
+        with open(f"{size}_file.txt", "rb") as f:
             original_data = f.read()
 
         if original_data == decrypted_data:

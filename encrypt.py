@@ -4,7 +4,7 @@ import time
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from Crypto.Cipher import AES
-     
+
 
 def pad(data, block_size=16):
     """
@@ -66,24 +66,24 @@ def measure_time(func, *args, **kwargs):
     Returns:
         tuple: A tuple containing the result of the function and the time taken in seconds.
     """
-    start_time = time.time()
+    start_time = time.perf_counter()
     result = func(*args, **kwargs)
-    end_time = time.time()
+    end_time = time.perf_counter()
     return result, end_time - start_time
 
 
 if __name__ == "__main__":
-    file_sizes = [1, 5, 10, 100]
+    file_sizes = ['1KB', '5KB', '10KB', '100KB']
     password = "my_password"
 
     # Encrypt and measure performance for different file sizes
     for size in file_sizes:
-        file_name = f"message_{size}KB.txt"
+        file_name = f"{size}_file.txt"
         with open(file_name, "rb") as f:
             plaintext = f.read()
 
         encrypted_data, encryption_time = measure_time(encrypt, plaintext, password)
         print(f"Encryption time for PGP-CFB ({size}KB): {encryption_time:.4f} seconds")
 
-        with open(f"encrypted_{size}KB.txt", "wb") as f:
+        with open(f"encrypted_{size}_file.txt", "wb") as f:
             f.write(encrypted_data)
