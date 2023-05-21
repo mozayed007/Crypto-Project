@@ -16,6 +16,8 @@ def unpad(data):
         bytes: The unpadded data.
     """
     padding_length = data[-1]
+    if padding_length > len(data) or data[-padding_length:] != bytes([padding_length]) * padding_length:
+        raise ValueError("Invalid padding")
     return data[:-padding_length]
 
 def decrypt(data, password):
@@ -32,12 +34,13 @@ def decrypt(data, password):
     salt = data[:16]
     iv = data[16:32]
     encrypted_data = data[32:]
-    key, _ = generate_key_iv(password, salt)
+    key, _ = generate_key_iv(password, salt, iv=iv)
     cipher = AES.new(key, AES.MODE_CFB, iv)
     decrypted_data = cipher.decrypt(encrypted_data)
     return unpad(decrypted_data)
 
-def generate_key_iv(password, salt, key_size=32, iv_size=16):
+
+def generate_key_iv(password, salt, key_size=32, iv_size=16, iv=None):
     """
     Generate a key and IV from the given password and salt.
     
@@ -51,9 +54,9 @@ def generate_key_iv(password, salt, key_size=32, iv_size=16):
         tuple: A tuple containing the derived key and IV.
     """
     key = PBKDF2(password, salt, dkLen=key_size)
-    iv = get_random_bytes(iv_size)
+    if iv is None:
+        iv = get_random_bytes(iv_size)
     return key, iv
-
 def measure_time(func, *args, **kwargs):
     """
     Measure the execution time of a function.
@@ -74,16 +77,16 @@ def measure_time(func, *args, **kwargs):
 if __name__ == "__main__":
     file_sizes = ['1KB', '5KB', '10KB', '100KB']
     password = "my_password"
-
-    # Decrypt and measure performance for different file sizes
+    os.makedirs("Standard_AES", exist_ok=True)
+    # Standard_AES: Decrypt and measure performance for different file sizes
     for size in file_sizes:
-        with open(f"encrypted_{size}_file.txt", "rb") as f:
+        with open(f"Standard_AES/encrypted_{size}_standard_AES_CFB_file.txt", "rb") as f:
             encrypted_data = f.read()
 
         decrypted_data, decryption_time = measure_time(decrypt, encrypted_data, password)
-        print(f"Decryption time for PGP-CFB ({size}KB): {decryption_time:.4f} seconds")
+        print(f"Decryption time for Standard AES-CFB ({size}): {decryption_time:.4f} seconds")
 
-        with open(f"decrypted_{size}_file.txt", "wb") as f:
+        with open(f"Standard_AES/decrypted_{size}_standard_AES_CFB_file.txt", "wb") as f:
             f.write(decrypted_data)
 
         # Verify successful decryption by comparing the original and decrypted data
@@ -91,6 +94,6 @@ if __name__ == "__main__":
             original_data = f.read()
 
         if original_data == decrypted_data:
-            print(f"Successful decryption for PGP-CFB ({size}KB)")
+            print(f"Successful decryption for Standard AES-CFB ({size})")
         else:
-            print(f"Decryption failed for PGP-CFB ({size}KB)")
+            print(f"Decryption failed for Standard AES-CFB ({size})")

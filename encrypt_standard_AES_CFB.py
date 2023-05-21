@@ -18,7 +18,8 @@ def pad(data, block_size=16):
         bytes: The padded data.
     """
     padding_length = block_size - (len(data) % block_size)
-    return data + bytes([padding_length]) * padding_length
+    padding = bytes([padding_length]) * padding_length
+    return data + padding
 
 def encrypt(data, password):
     """
@@ -35,9 +36,11 @@ def encrypt(data, password):
     key, iv = generate_key_iv(password, salt)
     cipher = AES.new(key, AES.MODE_CFB, iv)
     encrypted_data = cipher.encrypt(pad(data))
+    print(f"Encryption Key: {key.hex()}")
+    print(f"Encryption IV: {iv.hex()}")
     return salt + iv + encrypted_data
 
-def generate_key_iv(password, salt, key_size=32, iv_size=16):
+def generate_key_iv(password, salt, key_size=32, iv_size=16 , iv=None):
     """
     Generate a key and IV from the given password and salt.
     
@@ -51,7 +54,8 @@ def generate_key_iv(password, salt, key_size=32, iv_size=16):
         tuple: A tuple containing the derived key and IV.
     """
     key = PBKDF2(password, salt, dkLen=key_size)
-    iv = get_random_bytes(iv_size)
+    if iv is None:
+        iv = get_random_bytes(iv_size)
     return key, iv
 
 def measure_time(func, *args, **kwargs):
@@ -75,15 +79,16 @@ def measure_time(func, *args, **kwargs):
 if __name__ == "__main__":
     file_sizes = ['1KB', '5KB', '10KB', '100KB']
     password = "my_password"
+    os.makedirs("Standard_AES", exist_ok=True)
 
-    # Encrypt and measure performance for different file sizes
+    # Standard_AES: Encrypt and measure performance for different file sizes
     for size in file_sizes:
         file_name = f"{size}_file.txt"
         with open(file_name, "rb") as f:
             plaintext = f.read()
 
         encrypted_data, encryption_time = measure_time(encrypt, plaintext, password)
-        print(f"Encryption time for PGP-CFB ({size}KB): {encryption_time:.4f} seconds")
+        print(f"Encryption time for Standard AES-CFB ({size}): {encryption_time:.4f} seconds")
 
-        with open(f"encrypted_{size}_file.txt", "wb") as f:
+        with open(f"Standard_AES/encrypted_{size}_standard_AES_CFB_file.txt", "wb") as f:
             f.write(encrypted_data)
