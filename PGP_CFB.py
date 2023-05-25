@@ -4,7 +4,7 @@ from hashlib import sha256
 from Crypto.Cipher import AES
 
 class PGP_CFB:
-    def __init__(self, key, block_size=16):
+    def __init__(self, key, block_size=32):
         self.key = key
         self.block_size = block_size
 
