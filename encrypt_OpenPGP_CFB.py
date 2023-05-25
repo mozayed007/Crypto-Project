@@ -1,3 +1,5 @@
+#OpenPGP-CFB:
+#Encrypting a file using OpenPGP-CFB mode
 import pgpy
 import os
 import time

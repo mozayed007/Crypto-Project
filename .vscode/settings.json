@@ -1,11 +1,17 @@
 {
     "cSpell.words": [
         "ciphertext",
+        "combinate",
+        "eignum",
+        "openpgp",
         "pgpy",
         "PKCS",
         "unpad",
         "unpadded",
         "zuccherato",
         "Zuccherato"
+    ],
+    "cSpell.ignoreWords": [
+        "unpadding"
     ]
 }
