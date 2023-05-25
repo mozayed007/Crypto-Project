@@ -36,8 +36,6 @@ def encrypt(data, password):
     key, iv = generate_key_iv(password, salt)
     cipher = AES.new(key, AES.MODE_CFB, iv)
     encrypted_data = cipher.encrypt(pad(data))
-    print(f"Encryption Key: {key.hex()}")
-    print(f"Encryption IV: {iv.hex()}")
     return salt + iv + encrypted_data
 
 def generate_key_iv(password, salt, key_size=32, iv_size=16 , iv=None):

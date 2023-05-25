@@ -1,7 +1,7 @@
 import os
 from hashlib import sha256
 from Crypto.Cipher import AES
-from PGP_CFB import PGP_CFB
+from PGP_CFB_old import PGP_CFB
 
 # Function to read the plaintext input
 def read_plaintext():
