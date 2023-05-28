@@ -4,9 +4,14 @@ import time
 from Crypto.Random import get_random_bytes
 from encrypt_standard_AES_CFB import encrypt as encrypt_standard_aes
 from decrypt_standard_AES_CFB import decrypt as decrypt_standard_aes
-from PGP_CFB import PGP_CFB
+from PGP_CFB_old import PGP_CFB
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.ticker as ticker
+import csv
+
 
 # Function to read the file content
 def read_file(file_path):
@@ -87,7 +92,11 @@ def decrypt_RSA(encrypted_data, key):
         decrypted_data += cipher.decrypt(chunk)
 
     return decrypted_data
-
+def write_to_csv(file_path, data, clear_file=False):
+    mode = 'w' if clear_file else 'a'
+    with open(file_path, mode, newline='') as csvfile:
+        csv_writer = csv.writer(csvfile)
+        csv_writer.writerow(data)
 
 # Main function
 def main():
@@ -100,14 +109,83 @@ def main():
     Returns:
     None
     """
+    def plot_performance_data(file_path):
+        def add_bar_labels(bars):
+            for bar in bars:
+                height = bar.get_height()
+                ax.annotate('{:.4f}'.format(height),
+                            xy=(bar.get_x() + bar.get_width() / 2, height),
+                            xytext=(0, 3),  # 3 points vertical offset
+                            textcoords="offset points",
+                            ha='center', va='bottom')
+
+        file_sizes = []
+        standard_aes_totals = []
+        pgp_cfb_totals = []
+        rsa_totals = []
+        with open(file_path, 'r') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            next(csv_reader)  # Skip the header row
+            for row in csv_reader:
+                if len(row) == 10:  # Use 10 columns for the x-axis values
+                    file_sizes.append(int(row[0]))
+                    standard_aes_totals.append(round(float(row[3]) * 1000, 4) if row[3] != "" else 0)
+                    pgp_cfb_totals.append(round(float(row[6]) * 1000, 4) if row[6] != "" else 0)
+                    rsa_totals.append(round(float(row[9]) * 1000, 4) if row[9] != "" else 0)
+
+        # Setting up the bar chart
+        bar_width = 0.25
+        fig, ax = plt.subplots()
+        x = np.arange(len(file_sizes))
+
+        # Creating bars for each algorithm
+        ax.bar(x - bar_width, standard_aes_totals, bar_width, label='Standard AES')
+        ax.bar(x, pgp_cfb_totals, bar_width, label='PGP-CFB')
+        ax.bar(x + bar_width, rsa_totals, bar_width, label='RSA')
+
+        # Adding labels, title, and legend
+        ax.set_xlabel('File Size (KB)')
+        ax.set_ylabel('Total Time (ms)')
+        ax.set_title('Performance Comparison of Encryption Algorithms')
+        ax.set_xticks(x)
+        ax.set_xticklabels(file_sizes)
+        ax.legend()
+        # Creating bars for each algorithm
+        bars_standard_aes = ax.bar(x - bar_width, standard_aes_totals, bar_width, label='Standard AES')
+        bars_pgp_cfb = ax.bar(x, pgp_cfb_totals, bar_width, label='PGP-CFB')
+        bars_rsa = ax.bar(x + bar_width, rsa_totals, bar_width, label='RSA')
+
+        # Adding labels to the bars
+        add_bar_labels(bars_standard_aes)
+        add_bar_labels(bars_pgp_cfb)
+        add_bar_labels(bars_rsa)
+        # Saving and displaying the chart
+        plt.savefig('performance_data.png')
+        plt.show()
+
+
     # Define the file sizes and key
     file_sizes = [1, 5, 10, 100]
     key = get_random_bytes(32) # Use 32 bytes (256 bits) for the AES key
-
+    # Create a list of tuples containing the file sizes and their respective encryption times
+    performance_data = []
     # Create output folders if they don't exist
     create_folder("Standard_AES")
     create_folder("OpenPGP")
     create_folder("PGP-CFB")
+    write_to_csv('performance_data.csv', [
+    'File size',
+    'Standard AES Encryption',
+    'Standard AES Decryption',
+    'Standard AES Total',
+    'PGP-CFB Encryption',
+    'PGP-CFB Decryption',
+    'PGP-CFB Total',
+    'RSA Encryption',
+    'RSA Decryption',
+    'RSA Total',
+    ], clear_file=True)
+
 
     # Encrypt and decrypt the test files using the respective algorithms and output them to the respective folders
     for file_size in file_sizes:
@@ -154,28 +232,44 @@ def main():
             rsa_decryption_time = end_time - start_time
             rsa_time = rsa_encryption_time + rsa_decryption_time
         # Print performance comparison
-
+        # Save performance data to CSV file
+        write_to_csv('performance_data.csv', [
+                            file_size,
+                            standard_aes_encryption_time,
+                            standard_aes_decryption_time,
+                            standard_aes_time,
+                            pgp_encryption_time,
+                            pgp_decryption_time,
+                            pgp_cfb_time,
+                            rsa_encryption_time if file_size in [1, 5] else "",
+                            rsa_decryption_time if file_size in [1, 5] else "",
+                            rsa_time if file_size in [1, 5] else "",
+                        ])    
         print(f"Performance Comparison:")
         print("==================================")
         print(f"File size: {file_size} KB")
         print("\n")
-        print(f"Standard AES CFB Encryption: {standard_aes_encryption_time:.4f} seconds")
-        print(f"Standard AES Decryption: {standard_aes_decryption_time:.4f} seconds")        
-        print(f"Standard AES CFB: {standard_aes_time:.4f} seconds")
+        print(f"Standard AES CFB Encryption: {standard_aes_encryption_time:.6f} seconds")
+        print(f"Standard AES Decryption: {standard_aes_decryption_time:.6f} seconds")        
+        print(f"Standard AES CFB: {standard_aes_time:.6f} seconds")
         print("\n")
-        print(f"PGP-CFB CFB Encryption: {pgp_encryption_time:.4f} seconds")
-        print(f"PGP-CFB Decryption: {pgp_decryption_time:.4f} seconds")        
-        print(f"PGP-CFB: {pgp_cfb_time:.4f} seconds")
+        print(f"PGP-CFB CFB Encryption: {pgp_encryption_time:.6f} seconds")
+        print(f"PGP-CFB Decryption: {pgp_decryption_time:.6f} seconds")        
+        print(f"PGP-CFB: {pgp_cfb_time:.6f} seconds")
         print("\n")
         if file_size in [1,5]:
-                print(f"RSA Encryption: {rsa_encryption_time:.4f} seconds")
-                print(f"RSA Decryption: {rsa_decryption_time:.4f} seconds")
-                print(f"RSA: {rsa_time:.4f} seconds")
+                print(f"RSA Encryption: {rsa_encryption_time:.6f} seconds")
+                print(f"RSA Decryption: {rsa_decryption_time:.6f} seconds")
+                print(f"RSA: {rsa_time:.6f} seconds")
         print("\n")
         write_file(f"Standard_AES/{file_size}KB_encrypted.txt", encrypted_data)
         write_file(f"Standard_AES/{file_size}KB_decrypted.txt", decrypted_data)
         write_file(f"PGP-CFB/{file_size}KB_encrypted.txt", encrypted_data)
         write_file(f"PGP-CFB/{file_size}KB_decrypted.txt", decrypted_data)
+        # Create a bar chart comparing the encryption times using matplotlib
+    print("Program completed successfully!")
+    plot_performance_data('performance_data.csv')
+    
 
 # Call the main function
 if __name__ == "__main__":

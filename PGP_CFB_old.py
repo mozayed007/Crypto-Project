@@ -31,7 +31,7 @@ class PGP_CFB:
         prev_cipher_block = iv
 
         # Iterate through padded data blocks and apply XOR operation
-        for i in range(0, len(padded_data), self.block_size):
+        for i in range(0, len(padded_data), self.block_size,):
             plaintext_block = padded_data[i:i+self.block_size]
             cipher_block = self.xor_bytes(plaintext_block, aes.encrypt(prev_cipher_block))
             encrypted_data.extend(cipher_block)
